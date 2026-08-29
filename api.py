@@ -1,6 +1,6 @@
 import time
 import requests
-def api_request(method, url, params=None, data=None, json=None, headers=None,max_retries=3):
+def api_request(method, url, params=None, data=None, json=None, headers=None,max_retries=4):
     attempts = 0
     while True:
         response = requests.request(method, url, params=params, data=data, json=json, headers=headers,timeout=10)
