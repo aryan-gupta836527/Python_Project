@@ -8,6 +8,7 @@ class WeatherAPI:
         self.params_search = {"name":self.city,"count":1}
         self.latitude= None
         self.longitude= None
+        self.weather_data = None
         self.get_location()
         self.get_weather_data()
     def get_weather_data(self):
@@ -31,7 +32,7 @@ class WeatherAPI:
                              "temperature_max":data["daily"]["temperature_2m_max"][i],
                              "temperature_min":data["daily"]["temperature_2m_min"][i]})
         return forecast
-    def get_weather_code(self):
+    def get_weather_description(self):
         data = self.weather_data
         weather_code=data["current"]["weather_code"]
         if weather_code == 0:
@@ -52,7 +53,7 @@ API=WeatherAPI(city)
 try:
     data = API.get_weather()
     data_forecast = API.get_forecast()
-    weather = API.get_weather_code()
+    weather = API.get_weather_description()
     print(f"""================================
        WEATHER REPORT
 ================================
