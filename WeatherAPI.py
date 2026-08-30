@@ -12,7 +12,6 @@ class WeatherAPI:
         self.weather_data = None
         self.cache = {}
         self.get_location()
-        self.get_weather_data()
     def get_weather_data(self):
         params_forecast = {"latitude":self.latitude,"longitude":self.longitude,"current":"temperature_2m,wind_speed_10m,weather_code","daily":"temperature_2m_max,temperature_2m_min"}
         self.weather_data = api_request("GET",self.url_forecast,params=params_forecast)
@@ -53,17 +52,17 @@ class WeatherAPI:
     def get_cached_weather_data(self):
         if self.city in self.cache and time.time() - self.cache[self.city]["time"] < 600:
             return self.cache[self.city]
-        else:
-            data = self.get_weather()
-            forecast = self.get_forecast()
-            weather_description = self.get_weather_description()
-            self.cache[self.city] = {"data":data,"data_forecast":forecast,"weather_description":weather_description,"time":time.time()}
-            return self.cache[self.city]
+        self.get_weather_data()
+        data = self.get_weather()
+        forecast = self.get_forecast()
+        weather_description = self.get_weather_description() # To update weather description in the cache. 
+        #If we don't do this, the weather description will not be updated in the cache and will always be the same as the first time we fetched the data.
+        self.cache[self.city] = {"data":data,"data_forecast":forecast,"weather_description":weather_description,"time":time.time()}
+        return self.cache[self.city]
 city=input("City: ")
 API=WeatherAPI(city)
 try:
     data = API.get_cached_weather_data()
-    print(data)
     print(f"""================================
        WEATHER REPORT
 ================================
