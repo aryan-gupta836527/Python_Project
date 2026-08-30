@@ -6,8 +6,7 @@ def api_request(method, url, params=None, data=None, json=None, headers=None,max
         response = requests.request(method, url, params=params, data=data, json=json, headers=headers,timeout=10)
         if response.status_code == 429:
             if attempts == max_retries:
-                print("Max attempts reached")
-                break
+                raise requests.exceptions.RequestException(f"Max retries exceeded for URL: {url}")
             retry_after = response.headers.get("Retry-After")
             if retry_after:
                 wait_time = int(retry_after)

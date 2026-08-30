@@ -1,4 +1,5 @@
 import requests
+import time
 from api import api_request
 class WeatherAPI:
     def __init__(self,city):
@@ -9,6 +10,7 @@ class WeatherAPI:
         self.latitude= None
         self.longitude= None
         self.weather_data = None
+        self.cache = {}
         self.get_location()
         self.get_weather_data()
     def get_weather_data(self):
@@ -48,27 +50,35 @@ class WeatherAPI:
         else:
             weather = "Unknown"
         return weather
+    def get_cached_weather_data(self):
+        if self.city in self.cache and time.time() - self.cache[self.city]["time"] < 600:
+            return self.cache[self.city]
+        else:
+            data = self.get_weather()
+            forecast = self.get_forecast()
+            weather_description = self.get_weather_description()
+            self.cache[self.city] = {"data":data,"data_forecast":forecast,"weather_description":weather_description,"time":time.time()}
+            return self.cache[self.city]
 city=input("City: ")
 API=WeatherAPI(city)
 try:
-    data = API.get_weather()
-    data_forecast = API.get_forecast()
-    weather = API.get_weather_description()
+    data = API.get_cached_weather_data()
+    print(data)
     print(f"""================================
        WEATHER REPORT
 ================================
 
     Location: {city}
 
-    Current Weather: {data['temperature']} °C
-    Wind Speed: {data['wind_speed']} km/h
-    Condition: {weather}
+    Current Weather: {data["data"]["temperature"]} °C
+    Wind Speed: {data["data"]["wind_speed"]} km/h
+    Condition: {data["weather_description"]}
 
         3-Day Forecast
 ------------------------------------
     Date        Min       Max""")
 
-    for day in data_forecast:
+    for day in data["data_forecast"]:
         print(
             f"{day['date']}    "
             f"{day['temperature_min']} °C    "
