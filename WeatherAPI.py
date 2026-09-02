@@ -2,6 +2,7 @@ import requests
 import time
 from api import api_request
 class WeatherAPI:
+    cache = {}
     def __init__(self,city):
         self.url_search = "https://geocoding-api.open-meteo.com/v1/search"
         self.url_forecast = "https://api.open-meteo.com/v1/forecast"
@@ -10,7 +11,6 @@ class WeatherAPI:
         self.latitude= None
         self.longitude= None
         self.weather_data = None
-        self.cache = {}
         self.get_location()
     def get_weather_data(self):
         params_forecast = {"latitude":self.latitude,"longitude":self.longitude,"current":"temperature_2m,wind_speed_10m,weather_code","daily":"temperature_2m_max,temperature_2m_min"}
@@ -50,40 +50,52 @@ class WeatherAPI:
             weather = "Unknown"
         return weather
     def get_cached_weather_data(self):
-        if self.city in self.cache and time.time() - self.cache[self.city]["time"] < 600:
-            return self.cache[self.city]
-        self.get_weather_data()
+        if self.city.lower() in WeatherAPI.cache and time.time() - WeatherAPI.cache[self.city.lower()]["time"] < 600:
+            print("Using cached data")
+            return WeatherAPI.cache[self.city.lower()]
+        self.get_weather_data()# To update weather description in the cache. 
+        #If we don't do this, the weather description will not be updated in the cache and will always be the same as the first time we fetched the data.
         data = self.get_weather()
         forecast = self.get_forecast()
-        weather_description = self.get_weather_description() # To update weather description in the cache. 
-        #If we don't do this, the weather description will not be updated in the cache and will always be the same as the first time we fetched the data.
-        self.cache[self.city] = {"data":data,"data_forecast":forecast,"weather_description":weather_description,"time":time.time()}
-        return self.cache[self.city]
-city=input("City: ")
-API=WeatherAPI(city)
-try:
-    data = API.get_cached_weather_data()
-    print(f"""================================
-       WEATHER REPORT
+        weather_description = self.get_weather_description() 
+        WeatherAPI.cache[self.city.lower()] = {"data":data,"data_forecast":forecast,"weather_description":weather_description,"time":time.time()}
+        return WeatherAPI.cache[self.city.lower()]
+while True:
+    city=input("City: ")
+    API=WeatherAPI(city)
+    try:
+        data = API.get_cached_weather_data()
+        print(f"""================================
+        WEATHER REPORT
 ================================
 
-    Location: {city}
+        Location: {city.title()}
 
-    Current Weather: {data["data"]["temperature"]} °C
-    Wind Speed: {data["data"]["wind_speed"]} km/h
-    Condition: {data["weather_description"]}
+        Current Weather: {data["data"]["temperature"]} °C
+        Wind Speed: {data["data"]["wind_speed"]} km/h
+        Condition: {data["weather_description"]}
 
-        3-Day Forecast
-------------------------------------
-    Date        Min       Max""")
+            3-Day Forecast
+    ------------------------------------
+        Date        Min       Max""")
 
-    for day in data["data_forecast"]:
-        print(
-            f"{day['date']}    "
-            f"{day['temperature_min']} °C    "
-            f"{day['temperature_max']} °C"
-        )
-except requests.exceptions.RequestException as e:
-    print(e)
-except ValueError as e:
-    print(e)
+        for day in data["data_forecast"]:
+            print(
+                f"{day['date']}    "
+                f"{day['temperature_min']} °C    "
+                f"{day['temperature_max']} °C"
+            )
+    except requests.exceptions.RequestException as e:
+        print(e)
+    except ValueError as e:
+        print(e)
+    chi='n'
+    while chi.lower()!='y':
+        chi=input("Do you want to check another city? (y/n): ")
+        if chi.lower()=='n' or chi.lower()=='y':
+            break
+        else:
+            print("Please enter 'y' or 'n'.")
+            continue
+    if chi.lower()=='n':
+        break
