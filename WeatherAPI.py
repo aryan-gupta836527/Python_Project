@@ -51,7 +51,9 @@ class WeatherAPI:
         return weather
     def get_cached_weather_data(self):
         if self.city.lower() in WeatherAPI.cache and time.time() - WeatherAPI.cache[self.city.lower()]["time"] < 600:
+            print()
             print("Using cached data")
+            print()
             return WeatherAPI.cache[self.city.lower()]
         self.get_weather_data()# To update weather description in the cache. 
         #If we don't do this, the weather description will not be updated in the cache and will always be the same as the first time we fetched the data.
