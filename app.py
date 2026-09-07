@@ -29,7 +29,6 @@ def create_user():
         return jsonify({"Error": validation_error}),400
     if data["id"] in [i["id"] for i in users]:
         return jsonify({"Error":f"User with ID {data['id']} already exists"}),400
-    #line 14-30 are validation checks for incoming data
     users.append(data)
     return jsonify({"Message":"User created","Data":data}), 201
 @app.route("/users/<int:id>",methods=["PUT"])#We don't need id validation here because we are using path parameter which is already validated by Flask
