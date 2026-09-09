@@ -1,6 +1,15 @@
 from flask import Flask,request,jsonify
 from pydantic import ValidationError
 from model import Create_User, Update_User
+import os
+from dotenv import load_dotenv
+load_dotenv()
+API_KEY=os.getenv("API_KEY")
+def validate_api_key():
+    api_key = request.headers.get("X-API-KEY")#To get the API key from the request headers
+    if api_key != API_KEY:
+        return False
+    return True
 app=Flask(__name__)
 users = []
 @app.route("/users",methods=["GET"])
@@ -25,6 +34,8 @@ def get_user(id):
 @app.route("/users",methods=["POST"])
 def create_user():
     data=request.get_json(silent=True)#If the client sends invalid JSON, this will return None instead of raising an error
+    if not validate_api_key():
+        return jsonify({"Error":"Invalid API Key"}),401
     try:
         user = Create_User.model_validate(data)
     except ValidationError as e:
@@ -37,17 +48,21 @@ def create_user():
 @app.route("/users/<int:id>",methods=["PUT"])#We don't need id validation here because we are using path parameter which is already validated by Flask
 def update_user(id):
     data=request.get_json(silent=True)
+    if not validate_api_key():
+        return jsonify({"Error":"Invalid API Key"}),401
     try:
         user = Update_User.model_validate(data)
     except ValidationError as e:
         return jsonify({"Error": str(e)}),400
     for i in users:
         if i["id"]==id:
-            i["name"]=data["name"]
+            i["name"]=user.name
             return jsonify({"Message":"User updated","Data":i}),200
     return jsonify({"Error":f"User with ID {id} not found"}),404
 @app.route("/users/<int:id>",methods=["DELETE"])
 def delete_user(id):
+    if not validate_api_key():
+        return jsonify({"Error":"Invalid API Key"}),401
     for i in users:
         if i["id"]==id:
             users.remove(i)
