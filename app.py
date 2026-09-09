@@ -1,5 +1,6 @@
 from flask import Flask,request,jsonify
-from validation import validate_create_user, validate_update_user
+from pydantic import ValidationError
+from model import Create_User, Update_User
 app=Flask(__name__)
 users = []
 @app.route("/users",methods=["GET"])
@@ -7,7 +8,7 @@ def get_users():
     id = request.args.get("id")
     if id is None:
         return jsonify(users),200
-    if id.isdigit()==False:
+    if not id.isdigit(): 
         return jsonify({"Error":"ID must be an integer"}),400
     id=int(id)
     if id<=0:
@@ -24,19 +25,22 @@ def get_user(id):
 @app.route("/users",methods=["POST"])
 def create_user():
     data=request.get_json(silent=True)#If the client sends invalid JSON, this will return None instead of raising an error
-    validation_error = validate_create_user(data)
-    if validation_error:
-        return jsonify({"Error": validation_error}),400
-    if data["id"] in [i["id"] for i in users]:
-        return jsonify({"Error":f"User with ID {data['id']} already exists"}),400
-    users.append(data)
-    return jsonify({"Message":"User created","Data":data}), 201
+    try:
+        user = Create_User.model_validate(data)
+    except ValidationError as e:
+        return jsonify({"Error": str(e)}),400
+    if user.id in [i["id"] for i in users]:
+        return jsonify({"Error":f"User with ID {user.id} already exists"}),400
+    user_data=user.model_dump()
+    users.append(user_data)
+    return jsonify({"Message":"User created","Data":user_data}), 201
 @app.route("/users/<int:id>",methods=["PUT"])#We don't need id validation here because we are using path parameter which is already validated by Flask
 def update_user(id):
     data=request.get_json(silent=True)
-    validation_error = validate_update_user(data)
-    if validation_error:
-        return jsonify({"Error": validation_error}),400
+    try:
+        user = Update_User.model_validate(data)
+    except ValidationError as e:
+        return jsonify({"Error": str(e)}),400
     for i in users:
         if i["id"]==id:
             i["name"]=data["name"]
