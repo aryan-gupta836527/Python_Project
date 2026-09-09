@@ -1,8 +1,13 @@
 import requests
+import os
+from dotenv import load_dotenv
+load_dotenv()
 url = "http://127.0.0.1:5000/users"
-response1 = requests.post(url, json={"id": 1, "name": "John Doe"})
-response2 = requests.post(url, json={"id": 1, "name": "Jane Smith"})
-response3 = requests.post(url, json={"id": 2, "name": "Bob Johnson"})
+API_KEY = os.getenv("API_KEY")
+headers = {"X-API-KEY": API_KEY}
+response1 = requests.post(url, json={"id": 1, "name": "John Doe"}, headers=headers)
+response2 = requests.post(url, json={"id": 1, "name": "Jane Smith"}, headers=headers)
+response3 = requests.post(url, json={"id": 2, "name": "Bob Johnson"}, headers=headers)
 response4 = requests.get(url)
 response5 = requests.get(url + "/1")
 response6 = requests.get(url + "/99")
